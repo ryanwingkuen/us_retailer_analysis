@@ -27,6 +27,15 @@ This repository serves as both a data exploration and analytical portfolio piece
 
 ---
 
+## 📖 Instructions
+- **Download** the file titled 'retailer_data' and import it into MySQL
+to set up the schema/database.
+- **Download** the file titled 'analysis_code' and import it into MySQL
+to perform the analysis.
+- **Run** different sections of 'analysis_code' to view calculations.
+
+---
+
 ## 🧾 License
 This project is licensed under the MIT License.
 You are free to use, modify, and distribute this project for personal or commercial purposes with proper attribution.
