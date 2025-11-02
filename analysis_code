@@ -1,0 +1,46 @@
+-- We can find the CQGR (Compound Quarterly Growth Rate)
+-- using the formula:
+-- (currentvalue/previousvalue)^(1/n) - 1
+-- where n is the number of quarters.
+-- If statement_period_weeks = 52, n will be 4.
+-- If statement_period_weeks = 16, n will be 1.
+-- If statement_period_weeks = 38, n will be 3.
+
+-- This will be the general string of code that will be
+-- repeated throughout the analysis to join all tables:
+
+SELECT *
+FROM balance_sheet AS bal
+JOIN income_statement AS inc
+	ON bal.company_name = inc.company_name
+JOIN cash_flow AS cash
+	ON bal.company_name = cash.company_name
+JOIN face_value AS face
+	ON bal.company_name = face.company_name
+;
+
+-- Revenue --
+
+SELECT bal.company_name, 
+(inc.revenue / prev_revenue) AS calculated_revenue,
+(1 / inc.statement_period_quarters) AS calculated_period,
+inc.statement_period_quarters,
+ROUND(POWER((inc.revenue / prev_revenue),(1 / inc.statement_period_quarters)) - 1,4) AS result
+FROM balance_sheet AS bal
+JOIN income_statement AS inc
+  ON bal.company_name = inc.company_name
+JOIN cash_flow AS cash
+  ON bal.company_name = cash.company_name
+JOIN face_value AS face
+  ON bal.company_name = face.company_name
+ORDER BY result desc;
+
+-- We see that Amazon had the best relative increase in revenue,
+-- with a 13% increase from the previous quarter.
+-- We also see that annually, companies see worse performance than those
+-- who report their findings quarterly.
+-- While this doesn't necessarily mean these companies are performing worse,
+-- this does imply these companies are not seeing growth in revenue annually.
+-- Companies who report their findings quarterly could just be seeing
+-- spikes in revenue, and there may be decline as the year continues
+-- after peak shopping periods.
