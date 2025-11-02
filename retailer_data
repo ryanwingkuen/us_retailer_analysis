@@ -1,0 +1,108 @@
+DROP DATABASE IF EXISTS `US_Retailers`;
+CREATE DATABASE `US_Retailers`;
+USE `US_Retailers`;
+
+-- The following data was accessed from company websites.
+-- Most recent fiscal year or quarter were used,
+-- depending on the availability of data.
+
+CREATE TABLE income_statement (
+	company_name VARCHAR(30),
+    revenue INT NOT NULL,
+    prev_revenue INT NOT NULL,
+    operating_expenses INT NOT NULL,
+    prev_op_expenses INT NOT NULL,
+    net_income INT NOT NULL,
+    prev_net_inc INT NOT NULL,
+    statement_period_weeks INT NOT NULL
+    );
+    
+CREATE TABLE balance_sheet (
+	company_name VARCHAR(30),
+    total_assets INT NOT NULL,
+    prev_total_assets INT NOT NULL,
+    total_liabilities INT NOT NULL,
+    prev_total_liabilities INT NOT NULL,
+    total_equity INT NOT NULL,
+    prev_total_equity INT NOT NULL,
+    statement_period_weeks INT NOT NULL
+    );
+    
+CREATE TABLE cash_flow (
+	company_name VARCHAR(30),
+    operating_activities INT NOT NULL,
+    prev_op_activities INT NOT NULL,
+    investing_activities INT NOT NULL,
+    prev_inv_activities INT NOT NULL,
+    financing_activities INT NOT NULL,
+    prev_fin_activities INT NOT NULL,
+    cash_begin_period INT NOT NULL,
+    prev_cash_begin INT NOT NULL,
+    cash_end_period INT NOT NULL,
+    prev_cash_end INT NOT NULL,
+    statement_period_weeks INT NOT NULL
+    );
+    
+CREATE TABLE face_value (
+	company_name VARCHAR(30),
+	product_market VARCHAR(30),
+    year_founded YEAR,
+    employees INT NOT NULL,
+    headquarters_state VARCHAR(2)
+    );
+
+INSERT INTO income_statement
+VALUES
+('Costco',86156,79697,82815,76655,2610,2354,16),
+('Walmart',165609,161508,158474,154667,4639,5307,16),
+('Amazon',167702,147977,148531,133305,18164,13485,16),
+('Walgreens',38986,36351,38973,36285,-196,230,16),
+('CVS Health',98915,94588,96534,91214,1021,1779,16),
+('Home Depot',159514,152669,31782,29271,14806,15143,52),
+('Kroger',147123,150039,143274,146943,2665,2164,52),
+('Target',106566,107412,101000,101705,4091,4138,52),
+('Lowes',83674,86377,73208,74820,6957,7726,52),
+('Albertsons',80390,79237,78844,77169,958,1296,52);
+
+INSERT INTO balance_sheet
+VALUES
+('Costco',77099,69831,47935,46209,29164,23622,52),
+('Walmart',262372,260823,171724,163131,90341,97421,16),
+('Amazon',682170,624894,348395,338924,333775,285970,16),
+('Walgreens',69406,81037,62087,68858,7209,12005,16),
+('CVS Health',258343,255585,180792,178475,77551,77110,16),
+('Home Depot',96119,76530,89479,75486,6640,1044,52),
+('Kroger',52616,50505,44335,38904,8281,11601,52),
+('Target',57769,55356,12047,13141,14666,13432,52),
+('Lowes',43102,41795,57333,56845,-14231,-15050,52),
+('Albertsons',26755,26221,23368,23470,3385,2747,52);
+
+INSERT INTO cash_flow
+VALUES
+('Costco',13335,11339,-5311,-4409,-3775,-10764,9906,13700,14161,9906,52),
+('Walmart',5411,4249,-5093,-4409,8,-321,9536,9935,9932,9460,16),
+('Amazon',32515,25281,-39424,-22138,-2539,-4490,69893,73332,61453,71673,16),
+('Walgreens',245,-314,260,1106,-2785,-912,3218,856,939,740,38),
+('CVS Health',1897,4556,-1024,-762,806,-2332,10346,8884,12025,10346,16),
+('Home Depot',19810,21172,-21031,-4729,-694,-15443,3760,2757,1659,3760,52),
+('Kroger',5794,6788,-3228,-3750,-490,-2170,1883,1015,3959,1883,52),
+('Target',7367,8621,-2860,-4760,-3550,-2285,3805,2229,4762,3805,52),
+('Lowes',9625,8140,-1738,-1901,-7047,-6666,921,1348,1761,921,52),
+('Albertsons',2680,2659,-1891,-1746,-684,-1183,193,463,297,193,52);
+
+-- Kroger was founded in the 1800's,
+-- but because MySQL does not allow years before 1901,
+-- we will use the year 1901 for face_value.
+
+INSERT INTO face_value
+VALUES
+('Costco','Warehouse Club','1983',341000,'WA'),
+('Walmart','Superstore','1962',2100000,'AR'),
+('Amazon','Non-Store','1994',1556000,'WA'),
+('Walgreens Boots Alliance','Pharmacy','2014',312000,'IL'),
+('CVS Health','Pharmacy','1963',300000,'RI'),
+('Home Depot','Home Improvement','1978',470100,'GA'),
+('Kroger','Supermarket','1901',414000,'OH'),
+('Target','Department Store','1902',440000,'MN'),
+('Lowes','Home Improvement','1921',270000,'NC'),
+('Albertsons','Supermarket','1939',325000,'ID');
