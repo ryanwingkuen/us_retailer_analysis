@@ -1,3 +1,5 @@
+	-- Preface --
+
 -- We can find the CQGR (Compound Quarterly Growth Rate)
 -- using the formula:
 -- (currentvalue/previousvalue)^(1/n) - 1
@@ -5,7 +7,6 @@
 -- If statement_period_weeks = 52, n will be 4.
 -- If statement_period_weeks = 16, n will be 1.
 -- If statement_period_weeks = 38, n will be 3.
-
 -- This will be the general string of code that will be
 -- repeated throughout the analysis to join all tables:
 
@@ -19,13 +20,17 @@ JOIN face_value AS face
 	ON bal.company_name = face.company_name
 ;
 
--- Revenue --
+	-- Revenue --
+
+-- We will use this query to determine which company
+-- saw the best relative growth in terms of revenue:
 
 SELECT bal.company_name, 
 (inc.revenue / prev_revenue) AS calculated_revenue,
 (1 / inc.statement_period_quarters) AS calculated_period,
 inc.statement_period_quarters,
-ROUND(POWER((inc.revenue / prev_revenue),(1 / inc.statement_period_quarters)) - 1,4) AS result
+ROUND(POWER((inc.revenue / prev_revenue),
+(1 / inc.statement_period_quarters)) - 1,4) AS result
 FROM balance_sheet AS bal
 JOIN income_statement AS inc
   ON bal.company_name = inc.company_name
@@ -33,7 +38,8 @@ JOIN cash_flow AS cash
   ON bal.company_name = cash.company_name
 JOIN face_value AS face
   ON bal.company_name = face.company_name
-ORDER BY result desc;
+ORDER BY result DESC
+;
 
 -- We see that Amazon had the best relative increase in revenue,
 -- with a 13% increase from the previous quarter.
@@ -44,3 +50,154 @@ ORDER BY result desc;
 -- Companies who report their findings quarterly could just be seeing
 -- spikes in revenue, and there may be decline as the year continues
 -- after peak shopping periods.
+
+	-- Net Income --
+
+-- We can use a similar query to determine relative growth
+-- or decline in net income:
+
+SELECT bal.company_name, 
+(inc.net_income / prev_net_inc) AS calculated_netinc,
+(1 / inc.statement_period_quarters) AS calculated_period,
+inc.statement_period_quarters,
+ROUND(POWER((inc.net_income / prev_net_inc),
+(1 / inc.statement_period_quarters)) - 1,4) AS result
+FROM balance_sheet AS bal
+JOIN income_statement AS inc
+  ON bal.company_name = inc.company_name
+JOIN cash_flow AS cash
+  ON bal.company_name = cash.company_name
+JOIN face_value AS face
+  ON bal.company_name = face.company_name
+ORDER BY result DESC
+;
+
+-- While a lot of companies reported growth in revenue in their
+-- most recent reportings, only 4 saw an increase in their net income,
+-- meaning most companies expenses increase more than revenue.
+-- Amazon maintains its position as a great performer, with Costco
+-- at a second.
+-- It's also important to note that Kroger reported a decline in revenue,
+-- but they are one of the best performers in net income,
+-- meaning their expenses were reduced to compensate for the 
+-- drop in revenue.
+-- We can see this in the following query:
+
+SELECT inc.company_name,
+(inc.operating_expenses / prev_op_expenses) AS calculated_expenses,
+(1 / inc.statement_period_quarters) AS calculated_period,
+inc.statement_period_quarters,
+ROUND(POWER((inc.operating_expenses / prev_op_expenses),
+(1 / inc.statement_period_quarters)) - 1,4) AS result
+FROM income_statement AS inc
+WHERE inc.company_name = 'Kroger'
+;
+
+	-- Net Income per Product Market --
+
+-- We can utilize a new query to look at the overall
+-- performance of different product markets:
+
+SELECT face.product_market,
+SUM(inc.net_income) AS total_net_income,
+SUM(inc.prev_net_inc) AS total_prev_net_income,
+(SUM(inc.net_income) / SUM(inc.prev_net_inc)) AS calculated_netinc,
+(1.0 / AVG(inc.statement_period_quarters)) AS calculated_period,
+AVG(inc.statement_period_quarters) AS statement_period_quarters,
+ROUND(POWER((SUM(inc.net_income) / SUM(inc.prev_net_inc)),
+(1.0 / AVG(inc.statement_period_quarters))) - 1,4) AS result
+FROM income_statement AS inc
+JOIN face_value AS face
+  ON inc.company_name = face.company_name
+GROUP BY face.product_market
+ORDER BY result DESC
+;
+
+-- This only shows us how dominant Amazon and Costco are
+-- in their product markets, since they are the only Non-Store
+-- and Warehouse Club in this schema, yet they beat sum values
+-- of other US product markets.
+-- We can break this back down into individual companies,
+-- and utilize window functions to display the data.alter
+
+SELECT face.company_name,
+face.product_market,
+inc.net_income,
+inc.prev_net_inc,
+SUM(inc.net_income) OVER (PARTITION BY face.product_market) AS total_net_income,
+SUM(inc.prev_net_inc) OVER (PARTITION BY face.product_market) AS total_prev_net_income,
+(SUM(inc.net_income) OVER (PARTITION BY face.product_market) /
+SUM(inc.prev_net_inc) OVER (PARTITION BY face.product_market)) AS calculated_netinc,
+POWER(
+(SUM(inc.net_income) OVER (PARTITION BY face.product_market) /
+SUM(inc.prev_net_inc) OVER (PARTITION BY face.product_market)),
+(1.0 / inc.statement_period_quarters)) AS compounded_growth
+FROM income_statement AS inc
+JOIN face_value AS face
+  ON inc.company_name = face.company_name
+ORDER BY compounded_growth DESC
+;
+
+	-- Revenue per Employee --
+
+-- Revenue per Employee is a good metric for understanding how
+-- efficient a company utilizes its workforce, as well as how
+-- productive a company's workforce is.
+-- This simple query allows us to assess RPE:
+
+SELECT face.company_name,
+inc.revenue,
+face.employees,
+(inc.revenue / face.employees) AS rpe
+FROM face_value AS face
+JOIN income_statement AS inc
+	ON face.company_name = inc.company_name
+ORDER BY rpe DESC
+;
+
+-- From this query, we can see that Kroger, Home Depot,
+-- CVS, and Lowes have the most productive RPEs. 
+-- A low RPE isn't necessarily a bad thing, but it does
+-- mean a company might have too high of a headcount,
+-- and may not be utilizing assets efficiently.
+-- Over time, a low RPE can affect a company's financial health
+-- as well as its equity.
+
+	-- Investability --
+
+-- To calculate investability, we can use the simple 
+-- ROE (Return on Equity) formula, which is 
+-- Net Income / Shareholder's Equity * 100
+-- We can use the following query:
+
+SELECT inc.company_name,
+inc.net_income,
+bal.total_equity,
+inc.net_income / bal.total_equity AS roe
+FROM income_statement AS inc
+JOIN balance_sheet AS bal
+	ON inc.company_name = bal.company_name
+ORDER BY roe DESC
+;
+
+-- By using ROE, we see that the only 2 companies NOT to
+-- invest in are Walgreens and Lowes.
+-- We see that the best company to invest in is Home Depot,
+-- which earns 2.23 dollars in profit for every dollar of
+-- shareholder equity.
+-- This advice does not factor in external factors or
+-- any volatility in recent years.
+
+	-- Conclusion --
+    
+-- To summarize, Amazon and Costco are the best performers
+-- in terms of relative growth, based both off revenue
+-- and net income.
+-- Additionally, Kroger is rising through the ranks due to
+-- cuts to operating expenses and a high RPE.
+-- Lastly, Home Depot is outstanding in terms of ROE, with a
+-- 223% ROE; extraordinarilly higher than the next best (Kroger,
+-- with an ROE of 32%).
+-- However, this alone is not enough to invest in Home Depot,
+-- since it doesn't factor in the volatility of the market
+-- and their past financial performance.
